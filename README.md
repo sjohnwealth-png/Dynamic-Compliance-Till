@@ -1,66 +1,41 @@
-# The Dynamic Compliance Till Feature: A Human‑Centred Upgrade
+```markdown
+# Dynamic Compliance Till
 
-This feature is designed to eliminate the single biggest failure point in age verification: staff performing mental arithmetic under pressure.
+A human‑centred, regulator-focused age verification feature for licensed premises.
 
-## 1. THE PAIN POINT: The 9 PM Rush (The Old Way)
-🚨 The Scenario: Mental Math Meltdown
+This project removes the single biggest failure point in age checks: staff doing mental arithmetic under pressure. It provides a clear, always-on cutoff date and a fast, reliable age calculator for absolute certainty at the point of sale.
 
-It's a festival bar, 9 PM. Four friends approach the bar demanding lagers before the headliner starts. The bartender, Sarah, is exhausted. One customer looks young, and his ID shows a 2007 birth year.
+## The problem
+- Bar staff are under time pressure and must often perform arithmetic to decide if an ID holder is 18+. This leads to slow service, high stress and a real risk of wrong decisions that can cost licences and fines.
 
-| Challenge | Impact on Staff & Business |
-|---|---|
-| The Calculation: | "Today is Oct 19, 2025. Is 2007 their 18th year? Did their birthday pass? I have 30 seconds..." |
-| Cognitive Load: | Sarah must stop the order, break her flow, and perform complex arithmetic in a high-pressure environment. |
-| The Risk: | A rushed 1-second mistake could result in a costly licensing breach and significant fines. |
+## The solution
+Two simple components work together to eliminate guesswork:
 
-**RESULT:** SLOW SERVICE, HIGH STRESS, HIGH RISK OF ERROR.
+1. Dynamic Compliance Panel — permanently visible on the till. Shows the exact cutoff birth date ("MUST BE BORN ON OR BEFORE") updated from the device clock and refreshed in real time.
+2. Instant Verification Modal — tap the panel, enter D/M/Y from the ID and the system instantly shows age and a clear APPROVED / REFUSED verdict.
 
----
+Open the demo: `bar_till_system.html` (proof of concept).
 
-## 2. THE SOLUTION: Digital Certainty
+## Why this matters to UK regulators (RASG)
+- Removes human arithmetic errors and reduces enforcement risk.
+- Speeds service and preserves business revenue while protecting public safety.
+- Creates a clear, auditable interaction that supports licence compliance.
 
-Our feature is a dual safeguard, removing the guesswork entirely.
+## Benefits
+- Fast: verification in seconds, minimal impact on queue flow.
+- Confident: a simple, unambiguous pass/fail display for staff.
+- Defensible: reduces human error and helps demonstrate due diligence.
 
-### Component A: Dynamic Compliance Panel (The Always‑On Guardian)
-The display shows the required cutoff date in real-time, updated every 30 seconds from the local clock.
+## Pilot and next steps
+We welcome a regulator-led pilot or evaluation. Suggestions:
+- Small event trial (1–3 tills) with RASG observers.
+- Logging or CSV export for shift reporting and audits.
+- Integration options with POS or payment terminals.
 
-### Component B: Instant Verification Modal (The Confident Check)
-When a physical ID is presented, staff tap the panel to launch the calculator.  
-Input D/M/Y from the ID, the system instantly calculates the customer's exact age and outputs a clear, unambiguous verdict.
-
----
-
-## 3. THE GAIN POINT: Total Confidence (The New Way)
-
-✅ The Scenario: Zero‑Doubt Resolution
-
-Sarah sees the 2007 birth year on the ID. She doesn't calculate. She simply compares the ID to the large, red cutoff date on the screen, or uses the calculator for absolute certainty.
-
-| Action | Result for Staff & Business |
-|---|---|
-| Instant Comparison: | The ID shows **14 OCT 2007**. The screen says **10 OCT 2007**. The customer is immediately seen as too young. |
-| ID Verification: | Sarah taps the panel, inputs the date, and receives a digital confirmation: **UNDERAGE (REFUSED)**. |
-| Service Flow: | Sarah politely refuses the sale to the minor but serves the rest of the group. The transaction is complete in under 15 seconds. |
-
-**RESULT:** FAST SERVICE, ZERO COMPLIANCE DOUBT, LICENCE IS SECURE.
+## Contact
+Samuel John Umoh — GitHub: @sjohnwealth-png
 
 ---
 
-## Value Proposition
-
-This Dynamic Compliance Feature is a proactive investment in staff confidence and regulatory due diligence, turning a stressful calculation into a simple, confident button tap. It doesn't replace Challenge 25; it makes it foolproof.
-
----
-
-## Files included in this repo (suggested)
-- `bar_till_system.html` — demo/POC of the till UI and the dynamic compliance feature.
-- `README.md` — this README.
-- `LICENSE` — MIT (optional).
-
----
-
-## Next steps / Ideas
-- Add persistent sales tracking (localStorage or backend)
-- Export / sync to Google Sheets or CSV for shift reporting
-- Integrate with a proper payment terminal or POS API
-- Add tests, CI and build pipeline if the UI gets compiled into an SPA
+*This README is written to be short, clear and suitable for review by licensing and regulatory teams.*
+```
