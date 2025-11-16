@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Runtime Festival Bar Till System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the till screen look and feel */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .till-screen {
+            max-width: 1100px;
+            width: 96%;
+            background-color: #2b2b2b;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            padding: 1.25rem;
+        }
+        .till-button {
+            height: 100px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #ffffff;
+            border-radius: 0.5rem;
+            transition: transform 0.1s, opacity 0.1s;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+            text-align: center;
+            user-select: none;
+        }
+        .till-button:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+        /* Modal specific styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.75);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+        }
+        .modal-content {
+            background-color: #3f3f46; /* Slate 700 */
+            padding: 2rem;
+            border-radius: 1rem;
+            width: 92%;
+            max-width: 520px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7);
+        }
+        .input-field {
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            border: 1px solid #52525b; /* Slate 600 */
+            background-color: #18181b; /* Neutral 900 */
+            color: #fff;
+            font-size: 1.05rem;
+            text-align: center;
+        }
+        /* Order list styles */
+        .order-list {
+            max-height: 420px;
+            overflow-y: auto;
+        }
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: .4rem .6rem;
+            border-radius: .4rem;
+            background: rgba(255,255,255,0.02);
+            margin-bottom: .4rem;
+        }
+        .order-item .qty {
+            opacity: 0.8;
+            margin-right: .6rem;
+        }
+        .small-muted { font-size: .85rem; color: #d6d3d1; opacity: .8; }
+    </style>
+</head>
+<body>
+
+    <div class="till-screen">
+        <!-- Header / Branding -->
+        <h1 class="text-3xl font-extrabold text-yellow-300 text-center mb-4">
+            RUNTIME FESTIVAL BAR
+        </h1>
+
+        <!-- Age Verification Panel (Clickable to open calculator) -->
+        <div id="compliance-panel" onclick="showAgeCalculator()" class="bg-red-700 p-3 mb-4 rounded-lg shadow-xl border-4 border-yellow-400 cursor-pointer hover:bg-red-600 transition duration-200" role="button" aria-label="Open age verification calculator">
+            <p class="text-lg text-yellow-200 font-semibold text-center mb-1">
+                ALCOHOL COMPLIANCE CHECK (MUST BE 18)
+            </p>
+            <p id="compliance-date" class="text-3xl text-white font-black text-center tracking-wider">
+                -- Loading Date --
+            </p>
+            <p class="text-sm text-yellow-300 font-medium text-center mt-1">
+                (Click here to manually check a customer's age)
+            </p>
+        </div>
+
+        <!-- Main content: buttons and order summary side-by-side -->
+        <div class="grid grid-cols-12 gap-4">
+            <!-- Left: Buttons -->
+            <div class="col-span-8">
+                <!-- Till Buttons Grid - Main Menu -->
+                <div id="main-menu" class="grid grid-cols-5 gap-3 mb-3">
+                    <div class="till-button bg-blue-600" onclick="loadSubMenu('LAGER')">LAGER</div>
+                    <div class="till-button bg-green-600" onclick="loadSubMenu('WINE_GLASS')">WINE (Glass)</div>
+                    <div class="till-button bg-purple-600" onclick="loadSubMenu('COCKTAILS')">COCKTAILS</div>
+                    <div class="till-button bg-yellow-600" onclick="loadSubMenu('SHOTS')">SHOTS</div>
+                    <div class="till-button bg-gray-500" onclick="loadSubMenu('WATER')">WATER</div>
+
+                    <div class="till-button bg-orange-600" onclick="loadSubMenu('CIDER')">CIDER</div>
+                    <div class="till-button bg-amber-700" onclick="loadSubMenu('ALES')">ALES</div>
+                    <div class="till-button bg-red-800" onclick="loadSubMenu('SPARKLING_WINE')">SPARKLING WINE</div>
+                    <div class="till-button bg-teal-600" onclick="loadSubMenu('SODA_JUICE')">SODA/JUICE</div>
+                    <div class="till-button bg-pink-600" onclick="loadSubMenu('HOT_DRINKS')">HOT DRINKS</div>
+
+                    <div class="till-button bg-indigo-700" onclick="loadSubMenu('SPIRITS')">SPIRITS</div>
+                    <div class="till-button bg-lime-600" onclick="loadSubMenu('WINE_BOTTLE')">WINE (Bottle)</div>
+                    <div class="till-button bg-red-500" onclick="loadSubMenu('CHOCOLATE_BAR')">CHOCOLATE BAR</div>
+                    <div class="till-button bg-cyan-700" onclick="loadSubMenu('CRISPS')">CRISPS</div>
+                    <div id="clear-tab-btn" class="till-button bg-slate-700" onclick="clearOrder()">CLEAR TAB</div>
+                </div>
+
+                <!-- Submenu (hidden by default) -->
+                <div id="sub-menu" class="grid grid-cols-5 gap-3 hidden mb-3">
+                    <!-- Content generated dynamically -->
+                </div>
+            </div>
+
+            <!-- Right: Order Summary -->
+            <div class="col-span-4 bg-neutral-800 p-3 rounded-lg shadow-inner">
+                <div class="flex justify-between items-center mb-2">
+                    <div>
+                        <div class="text-white text-lg font-medium">Current Sale</div>
+                        <div id="sale-count" class="small-muted">Items: 0</div>
+                    </div>
+                    <div class="text-2xl text-yellow-400 font-extrabold" id="sale-total">£0.00</div>
+                </div>
+
+                <div class="order-list mb-3" id="order-list" aria-live="polite">
+                    <!-- Items appended here -->
+                    <div class="small-muted">No items added</div>
+                </div>
+
+                <div class="flex space-x-2">
+                    <button id="finish-pay" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200 shadow-lg" onclick="finishAndPay()">
+                        FINISH & PAY
+                    </button>
+                    <button id="void-last" class="bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200" onclick="voidLastItem()" title="Remove last item">VOID</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Age Calculator Modal -->
+    <div id="age-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="age-title">
+        <div class="modal-content" role="document">
+            <h2 id="age-title" class="text-2xl font-bold text-white mb-3 text-center">Age Verification Calculator</h2>
+            <p class="text-md text-yellow-300 mb-4 text-center">Enter the date of birth from the ID to check their age.</p>
+
+            <div class="flex space-x-3 mb-4">
+                <input type="number" id="input-day" placeholder="DD" min="1" max="31" class="input-field w-1/3" aria-label="Day of birth">
+                <input type="number" id="input-month" placeholder="MM" min="1" max="12" class="input-field w-1/3" aria-label="Month of birth">
+                <input type="number" id="input-year" placeholder="YYYY" min="1900" max="9999" class="input-field w-1/3" aria-label="Year of birth">
+            </div>
+
+            <button onclick="calculateAge()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-200 shadow-lg mb-3">
+                Calculate Age
+            </button>
+
+            <div id="age-result" class="text-3xl font-black text-center p-3 rounded-md bg-neutral-800 text-white">
+                Age: --
+            </div>
+
+            <button onclick="hideAgeCalculator()" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 mt-3 rounded-lg transition duration-200">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- Data Structure for Sub-Menus (UK Specific Items) ---
+        // DRINK_DATA is used to render buttons. Prices are in GBP as numbers (pounds).
+        const DRINK_DATA = {
+            'LAGER': ['Fosters', 'Carling', 'San Miguel', 'Peroni', 'Heineken', 'Pint (Other)'],
+            'WINE_GLASS': ['White (S)', 'White (L)', 'Red (S)', 'Red (L)', 'Rose (S)', 'Rose (L)'],
+            'COCKTAILS': ['Mojito', 'Espresso Martini', 'Aperol Spritz', 'Pina Colada', 'Margarita'],
+            'SHOTS': ['Tequila', 'Vodka', 'Jägermeister', 'Sambuca', 'Sourz'],
+            'WATER': ['Still Water', 'Sparkling Water', 'Bottled Water'],
+            'CIDER': ['Strongbow', 'Thatchers Gold', 'Kopparberg (Bottle)', 'Old Mout'],
+            'ALES': ['Doom Bar', 'London Pride', 'Pale Ale (Craft)', 'Stout'],
+            'SPARKLING_WINE': ['Prosecco (Glass)', 'Prosecco (Bottle)', 'Champagne (Bottle)'],
+            'SODA_JUICE': ['Coke', 'Diet Coke', 'Lemonade', 'Orange Juice', 'Tonic Water'],
+            'HOT_DRINKS': ['Tea', 'Espresso', 'Latte', 'Hot Chocolate'],
+            'SPIRITS': ['Gin', 'Vodka', 'Whiskey', 'Rum', 'Tequila', 'Mixers'],
+            'WINE_BOTTLE': ['House White', 'House Red', 'Premium Red', 'Premium White'],
+            'CHOCOLATE_BAR': ['Mars', 'Snickers', 'Dairy Milk', 'Kit Kat'],
+            'CRISPS': ['Salted', 'Cheese & Onion', 'Ready Salted', 'Prawn Cocktail']
+        };
+
+        // A simple price map. Add or tweak prices to match your venue.
+        const DRINK_PRICES = {
+            // Lagers & Ales (pint/can)
+            'Fosters': 4.00,
+            'Carling': 3.80,
+            'San Miguel': 4.20,
+            'Peroni': 4.50,
+            'Heineken': 4.50,
+            'Pint (Other)': 5.00,
+            'Doom Bar': 4.20,
+            'London Pride': 4.40,
+            'Pale Ale (Craft)': 4.80,
+            'Stout': 4.50,
+
+            // Wine glasses
+            'White (S)': 4.20,
+            'White (L)': 6.50,
+            'Red (S)': 4.20,
+            'Red (L)': 6.50,
+            'Rose (S)': 4.20,
+            'Rose (L)': 6.50,
+
+            // Cocktails
+            'Mojito': 7.50,
+            'Espresso Martini': 8.00,
+            'Aperol Spritz': 7.00,
+            'Pina Colada': 7.50,
+            'Margarita': 7.50,
+
+            // Shots
+            'Tequila': 3.00,
+            'Vodka': 3.00,
+            'Jägermeister': 3.00,
+            'Sambuca': 3.00,
+            'Sourz': 2.50,
+
+            // Water & softs
+            'Still Water': 1.80,
+            'Sparkling Water': 2.00,
+            'Bottled Water': 2.20,
+            'Coke': 2.50,
+            'Diet Coke': 2.50,
+            'Lemonade': 2.00,
+            'Orange Juice': 2.50,
+            'Tonic Water': 2.00,
+
+            // Cider
+            'Strongbow': 4.00,
+            'Thatchers Gold': 4.50,
+            'Kopparberg (Bottle)': 4.80,
+            'Old Mout': 4.80,
+
+            // Sparkling
+            'Prosecco (Glass)': 6.50,
+            'Prosecco (Bottle)': 28.00,
+            'Champagne (Bottle)': 55.00,
+
+            // Hot drinks
+            'Tea': 1.80,
+            'Espresso': 2.00,
+            'Latte': 2.80,
+            'Hot Chocolate': 2.80,
+
+            // Spirits (single serve)
+            'Gin': 3.50,
+            'Vodka': 3.50,
+            'Whiskey': 4.00,
+            'Rum': 3.50,
+            'Tequila': 3.50,
+            'Mixers': 0.80,
+
+            // Bottles & snacks
+            'House White': 16.00,
+            'House Red': 16.00,
+            'Premium Red': 22.00,
+            'Premium White': 22.00,
+            'Mars': 1.50,
+            'Snickers': 1.50,
+            'Dairy Milk': 1.50,
+            'Kit Kat': 1.50,
+            'Salted': 1.50,
+            'Cheese & Onion': 1.50,
+            'Ready Salted': 1.50,
+            'Prawn Cocktail': 1.60
+        };
+
+        // --- Till State Management ---
+        const mainMenu = document.getElementById('main-menu');
+        const subMenu = document.getElementById('sub-menu');
+        const ageModal = document.getElementById('age-modal');
+        const complianceDateId = 'compliance-date';
+
+        // Order state
+        let order = []; // array of { name, price, qty }
+        const orderListEl = document.getElementById('order-list');
+        const saleTotalEl = document.getElementById('sale-total');
+        const saleCountEl = document.getElementById('sale-count');
+
+        // helper: format currency
+        function fmt(v) {
+            return '£' + v.toFixed(2);
+        }
+
+        /**
+         * Renders the sub-menu for the selected category key.
+         * @param {string} key - The key from DRINK_DATA (e.g., 'LAGER').
+         */
+        function loadSubMenu(key) {
+            const items = DRINK_DATA[key];
+            if (!items) return;
+
+            // Clear existing sub-menu content
+            subMenu.innerHTML = '';
+
+            // 1. Add Back Button
+            const backButton = document.createElement('div');
+            backButton.className = 'till-button bg-slate-500 col-span-5 hover:bg-slate-600';
+            backButton.textContent = `← BACK TO MAIN MENU`;
+            backButton.onclick = showMainMenu;
+            subMenu.appendChild(backButton);
+
+            // 2. Add Category Label
+            const titleButton = document.createElement('div');
+            titleButton.className = 'till-button bg-gray-700 col-span-5 text-lg cursor-default';
+            // replace all underscores with spaces
+            titleButton.textContent = key.replace(/_/g, ' ').toUpperCase();
+            subMenu.appendChild(titleButton);
+
+            // 3. Add Item Buttons
+            const colorClasses = ['bg-sky-500', 'bg-indigo-500', 'bg-pink-500', 'bg-green-500', 'bg-orange-500', 'bg-red-500'];
+            items.forEach((item, index) => {
+                const button = document.createElement('div');
+                // Use modulus to cycle through colors
+                button.className = `till-button ${colorClasses[index % colorClasses.length]} col-span-1`;
+                // show name and price (if known)
+                const price = getPriceForItem(item);
+                button.innerHTML = `<div>${item}</div><div class="text-sm font-extrabold mt-1">${fmt(price)}</div>`;
+                button.onclick = () => addItem(item, price);
+                subMenu.appendChild(button);
+            });
+
+            // 4. Switch view
+            mainMenu.classList.add('hidden');
+            subMenu.classList.remove('hidden');
+        }
+
+        /**
+         * Switches the view back to the main menu.
+         */
+        function showMainMenu() {
+            subMenu.classList.add('hidden');
+            mainMenu.classList.remove('hidden');
+        }
+
+        /**
+         * Get price for an item (fallbacks if unknown).
+         * @param {string} item
+         * @returns {number}
+         */
+        function getPriceForItem(item) {
+            if (DRINK_PRICES.hasOwnProperty(item)) {
+                return DRINK_PRICES[item];
+            }
+            // fallbacks by keywords
+            if (/glass|prosecco|champagne/i.test(item)) return 6.5;
+            if (/cocktail/i.test(item)) return 7.5;
+            if (/pint|lager|ale|cider|strongbow|kopparberg/i.test(item)) return 4.5;
+            if (/shot|tequila|vodka|whiskey|rum|gin|jägermeister|sambuca/i.test(item)) return 3.0;
+            if (/water|coke|lemonade|juice|tonic/i.test(item)) return 2.0;
+            return 3.50; // generic default
+        }
+
+        /**
+         * Adds an item to the current order and updates UI.
+         * @param {string} name
+         * @param {number} price
+         */
+        function addItem(name, price) {
+            // if last item is same, increment qty
+            const last = order.length ? order[order.length - 1] : null;
+            if (last && last.name === name) {
+                last.qty += 1;
+            } else {
+                order.push({ name, price, qty: 1 });
+            }
+            renderOrder();
+        }
+
+        /**
+         * Renders the order list and totals
+         */
+        function renderOrder() {
+            orderListEl.innerHTML = '';
+            if (!order.length) {
+                orderListEl.innerHTML = '<div class="small-muted">No items added</div>';
+                saleTotalEl.textContent = fmt(0);
+                saleCountEl.textContent = 'Items: 0';
+                return;
+            }
+
+            let total = 0, itemsCount = 0;
+            order.forEach((it, idx) => {
+                total += it.price * it.qty;
+                itemsCount += it.qty;
+
+                const row = document.createElement('div');
+                row.className = 'order-item';
+                row.innerHTML = `\n                    <div>\n                        <div class="font-medium">${escapeHtml(it.name)}</div>\n                        <div class="small-muted">${fmt(it.price)} each</div>\n                    </div>\n                    <div class="flex items-center">\n                        <div class="qty small-muted mr-2">x${it.qty}</div>\n                        <div class="font-bold">${fmt(it.price * it.qty)}</div>\n                        <button class="ml-2 small-muted" title="Remove" onclick="removeItem(${idx})" style="margin-left:.6rem;background:none;border:none;color:#fff;opacity:.7;cursor:pointer">✕</button>\n                `;
+                orderListEl.appendChild(row);
+            });
+
+            saleTotalEl.textContent = fmt(total);
+            saleCountEl.textContent = `Items: ${itemsCount}`;
+        }
+
+        /**
+         * Remove a specific item line from order
+         * @param {number} idx
+         */
+        function removeItem(idx) {
+            if (idx >= 0 && idx < order.length) {
+                order.splice(idx, 1);
+                renderOrder();
+            }
+        }
+
+        /**
+         * Void last added item (decrement or remove)
+         */
+        function voidLastItem() {
+            if (!order.length) return;
+            const last = order[order.length - 1];
+            if (last.qty > 1) last.qty -= 1;
+            else order.pop();
+            renderOrder();
+        }
+
+        /**
+         * Clears the entire order
+         */
+        function clearOrder() {
+            if (!order.length) return;
+            if (!confirm('Clear current tab?')) return;
+            order = [];
+            renderOrder();
+        }
+
+        /**
+         * Finish & Pay workflow (simple flow - prompt for amount tendered)
+         */
+        function finishAndPay() {
+            if (!order.length) {
+                alert('No items in the current sale.');
+                return;
+            }
+            // Calculate total:
+            const total = order.reduce((s, it) => s + it.price * it.qty, 0);
+            // Simple prompt; replace with a proper modal/EPOS integration as needed
+            const givenStr = prompt(`Total ${fmt(total)} — Enter amount tendered (e.g. 20.00) or cancel to abort:`);
+            if (givenStr === null) return; // cancelled
+            const tender = parseFloat(givenStr.replace(/[^0-9.]/g, ''));
+            if (isNaN(tender) || tender < total) {
+                alert('Insufficient amount tendered. Payment aborted.');
+                return;
+            }
+            const change = tender - total;
+            alert(`Payment accepted.\nTotal: ${fmt(total)}\nTendered: ${fmt(tender)}\nChange: ${fmt(change)}\n\nSale complete.`);
+            // Reset order after payment
+            order = [];
+            renderOrder();
+        }
+
+        // Escape/overlay close and basic accessibility for modal
+        (function modalSetup() {
+            // close when clicking outside the modal content
+            ageModal.addEventListener('click', (e) => {
+                if (e.target === ageModal) hideAgeCalculator();
+            });
+            // close on ESC
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && ageModal.style.display === 'flex') hideAgeCalculator();
+            });
+        })();
+
+        // --- Age Compliance Date Display Logic ---
+
+        /**
+         * Calculates and displays the required birth date for a person to be 18 years old today.
+         */
+        function updateComplianceDate() {
+            const today = new Date();
+            // Calculate the date 18 years ago.
+            const complianceDate = new Date(
+                today.getFullYear() - 18,
+                today.getMonth(),
+                today.getDate()
+            );
+
+            const day = complianceDate.getDate().toString().padStart(2, '0');
+            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const month = monthNames[complianceDate.getMonth()];
+            const year = complianceDate.getFullYear();
+
+            const complianceMessage = `MUST BE BORN ON OR BEFORE: ${day} ${month} ${year}`;
+
+            const complianceElement = document.getElementById(complianceDateId);
+            if (complianceElement) {
+                complianceElement.textContent = complianceMessage;
+            }
+        }
+
+        // --- Age Calculator Modal Logic ---
+
+        /**
+         * Displays the Age Calculator Modal.
+         */
+        function showAgeCalculator() {
+            // set sensible max for year input to current year
+            const yearInput = document.getElementById('input-year');
+            yearInput.max = new Date().getFullYear();
+            ageModal.style.display = 'flex';
+            // Reset result on open
+            const res = document.getElementById('age-result');
+            res.textContent = 'Age: --';
+            res.className = 'text-3xl font-black text-center p-3 rounded-md bg-neutral-800 text-white';
+            // Clear inputs
+            document.getElementById('input-day').value = '';
+            document.getElementById('input-month').value = '';
+            document.getElementById('input-year').value = '';
+            // focus first field
+            setTimeout(() => document.getElementById('input-day').focus(), 50);
+        }
+
+        /**
+         * Hides the Age Calculator Modal.
+         */
+        function hideAgeCalculator() {
+            ageModal.style.display = 'none';
+        }
+
+        /**
+         * Escapes simple HTML content to avoid injection inside order list.
+         */
+        function escapeHtml(s) {
+            return String(s).replace(/[&<>"']+/g, function (m) {
+                return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m];
+            });
+        }
+
+        /**
+         * Validates the date by creating a Date object and comparing components.
+         */
+        function isValidDate(y, m, d) {
+            const dt = new Date(y, m - 1, d);
+            return dt && dt.getFullYear() === y && dt.getMonth() === (m - 1) && dt.getDate() === d;
+        }
+
+        /**
+         * Calculates the age based on user input (Day, Month, Year).
+         */
+        function calculateAge() {
+            const day = parseInt(document.getElementById('input-day').value, 10);
+            const month = parseInt(document.getElementById('input-month').value, 10);
+            const year = parseInt(document.getElementById('input-year').value, 10);
+            const resultElement = document.getElementById('age-result');
+
+            // Basic checks
+            if (isNaN(day) || isNaN(month) || isNaN(year)) {
+                resultElement.className = "text-xl font-black text-center p-3 rounded-md bg-red-800 text-white";
+                resultElement.textContent = "Error: Invalid Date Input";
+                return;
+            }
+
+            if (!isValidDate(year, month, day)) {
+                resultElement.className = "text-xl font-black text-center p-3 rounded-md bg-red-800 text-white";
+                resultElement.textContent = "Error: Invalid Date";
+                return;
+            }
+
+            const today = new Date();
+            const birthDate = new Date(year, month - 1, day);
+
+            if (birthDate > today) {
+                resultElement.className = "text-xl font-black text-center p-3 rounded-md bg-red-800 text-white";
+                resultElement.textContent = "Error: Date is in the Future";
+                return;
+            }
+
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDifference = today.getMonth() - birthDate.getMonth();
+            const dayDifference = today.getDate() - birthDate.getDate();
+
+            // Adjust age if the birthday hasn't happened this year yet
+            if (monthDifference < 0 || (monthDifference === 0 && dayDifference < 0)) {
+                age--;
+            }
+
+            // Visual feedback
+            let complianceClass = "bg-neutral-800";
+            let complianceText = `Age: ${age}`;
+
+            if (age >= 18) {
+                complianceClass = "bg-green-700";
+                complianceText = `Age: ${age} - APPROVED`;
+            } else {
+                complianceClass = "bg-red-700";
+                complianceText = `Age: ${age} - REFUSED`;
+            }
+
+            resultElement.className = `text-3xl font-black text-center p-3 rounded-md ${complianceClass} text-white`;
+            resultElement.textContent = complianceText;
+        }
+
+        /**
+         * Initialize on load
+         */
+        window.onload = function () {
+            updateComplianceDate();
+            // re-run the check regularly to keep date accurate (every 30s)
+            setInterval(updateComplianceDate, 30000);
+            // initial render of empty order
+            renderOrder();
+        };
+    </script>
+</body>
+</html>
