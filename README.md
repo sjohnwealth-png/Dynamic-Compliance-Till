@@ -26,11 +26,7 @@ Open the demo: `bar_till_system.html` (proof of concept).
 - Confident: a simple, unambiguous pass/fail display for staff.
 - Defensible: reduces human error and helps demonstrate due diligence.
 
-## Pilot and next steps
-We welcome a regulator-led pilot or evaluation. Suggestions:
-- Small event trial (1–3 tills) with RASG observers.
-- Logging or CSV export for shift reporting and audits.
-- Integration options with POS or payment terminals.
+
 
 ## Contact
 Samuel John Umoh — GitHub: @sjohnwealth-png
